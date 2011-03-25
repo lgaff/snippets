@@ -1,0 +1,27 @@
+to mandel :step :xres :yres :xthresh :ythresh
+  setorientation [0 0 90]
+  for [y 0 :yres 1] [ ~
+    pu ~
+    setpos (list 0 :y) ~
+    pd ~
+    for [x 0 :xres 1] [ ~
+      make "u :x/(:xres/2)-:xthresh ~
+      make "v :x/(:yres/2)-:ythresh ~
+      make "x0 0 ~
+      make "y0 0 ~
+      make "a 0 ~
+      make "b 0 ~
+      make "i :step ~
+      while [(and (:i>0) (:a+:b<4))] [ ~
+        make "a :x0*:x0 ~
+        make "b :y0*:y0 ~
+        make "y0 2*:x0*:y0+:v ~
+        make "x0 :a-:b+:u ~
+        make "i :i-1 ~
+      ] ~
+      if :i < 1 [pu] ~
+      fd 1 ~
+      pd ~
+    ] ~
+  ] ~
+end
