@@ -4,4 +4,5 @@ Bits and pieces that I've had lying about:
 - fractals: I have a fetish for writing mandelbrot plotters and other fractal visualisation algorithms in various languages. These are the ones I had lying around
 - snake: An ncurses based clone of snake.
 - tetris: An incomplete ncurses clone of Tetris
+- ruxcon: Code from the pentesting class at ruxcon 2010
 - random-perl: Mostly bad perl, including some codegolf entries.
