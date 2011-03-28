@@ -5,16 +5,20 @@
 
 ; Here we go.
 
-; On x86, the BIOS will load the boot block (where found) into address
-; 0x7C00. The segment and offset will change depending on implementation.
-; This..is a problem. So what do we do? We issue an assembler directive
-; telling it where to offset from, and then we jump to a known 
-; segment:offset address and start booting.
-
+; Ok, now we're going to do something actually a little interesting
+; (and also verifiable, up til now there's little to mark that we've
+; done anything at all because we really haven't). We're going to put
+; a message on the terminal. To do this, we need to define the string
+; data, load its address, and then call a BIOS interrupt to dump the 
+; contents to the screen.
 
 [ORG 0]                 ; Tells the assembler to consider this as the base address
     jmp 0x7C0:start     ; Jump to a known location. this is right below 
                         ; but at least now we -know- where we are.
+; We put the data after the jmp to the boot code so it wont be executed,
+; but before the actual code. this is the data space.
+message:
+    db "GREETINGS HUMAN"
 
 start:
     ; Ok, now we need to update the segment registers.
@@ -23,8 +27,21 @@ start:
     mov es, ax
     xor ax, ax          ; zero ax (This is an unnecessary step really, but it's nice to be tidy).
 
-    ; Ok, we're now in the right place, and we know it. but we're still
-    ; not going to do anything but hang.
+    ; Okay, now lets do something interesting. first, load the address into
+    ; the source index so the BIOS can find it
+    mov si, message
+
+    ; Now, we loop through printing each character in sequence
+print:
+    lodsb               ; Load the next byte
+    cmp al, 0           ; The string is null terminated, this checks for our exit condition
+    jz pon              ; hang when we're done
+    ; Set up and call BIOS interrupt 16 - VGA functions (http://en.wikipedia.org/wiki/INT_10H)
+    ; First load arguments for int 10h into the registers
+    mov bx, 7           ; set color mode. 7 = white
+    mov ah, 0xE         ; teletype output.
+    int 0x10            ; call the interrupt.
+    jmp print           ; Loop until the string is written out
 
 pon:
     jmp pon             ; 10 GOTO 10 essentially.
