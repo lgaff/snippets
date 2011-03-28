@@ -1,0 +1,7 @@
+Bits and pieces that I've had lying about:
+
+- barebones-kernel: A barebones 'kernel'. Does nothing except boot the machine and print a string. uses the grub stage1/2 loaders to get it there after the handrolled bootblock.
+- fractals: I have a fetish for writing mandelbrot plotters and other fractal visualisation algorithms in various languages. These are the ones I had lying around
+- snake: An ncurses based clone of snake.
+- tetris: An incomplete ncurses clone of Tetris
+- random-perl: Mostly bad perl, including some codegolf entries.
