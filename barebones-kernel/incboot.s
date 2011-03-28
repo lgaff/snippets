@@ -19,7 +19,7 @@
 ; but before the actual code. this is the data space.
 message:
     db "GREETINGS HUMAN"
-
+    db 0                ; Null terminate the string, just to be safe
 start:
     ; Ok, now we need to update the segment registers.
     mov ax, cs          ; Grab the address in the code segment...
