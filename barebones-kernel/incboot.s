@@ -5,21 +5,15 @@
 
 ; Here we go.
 
-; Ok, now we're going to do something actually a little interesting
-; (and also verifiable, up til now there's little to mark that we've
-; done anything at all because we really haven't). We're going to put
-; a message on the terminal. To do this, we need to define the string
-; data, load its address, and then call a BIOS interrupt to dump the 
-; contents to the screen.
+; Right, now we're going to read some data off the floppy into memory, and then jump
+; to it. For now, we won't worry about returning control from this, so it will be a 
+; blind jump, not a call.
 
 [ORG 0]                 ; Tells the assembler to consider this as the base address
     jmp 0x7C0:start     ; Jump to a known location. this is right below 
                         ; but at least now we -know- where we are.
 ; We put the data after the jmp to the boot code so it wont be executed,
 ; but before the actual code. this is the data space.
-message:
-    db "GREETINGS HUMAN"
-    db 0                ; Null terminate the string, just to be safe
 start:
     ; Ok, now we need to update the segment registers.
     mov ax, cs          ; Grab the address in the code segment...
@@ -27,23 +21,30 @@ start:
     mov es, ax
     xor ax, ax          ; zero ax (This is an unnecessary step really, but it's nice to be tidy).
 
-    ; Okay, now lets do something interesting. first, load the address into
-    ; the source index so the BIOS can find it
-    mov si, message
+; First, let's reset the floppy drive so it's ready for reading
 
-    ; Now, we loop through printing each character in sequence
-print:
-    lodsb               ; Load the next byte
-    cmp al, 0           ; The string is null terminated, this checks for our exit condition
-    jz pon              ; hang when we're done
-    ; Set up and call BIOS interrupt 16 - VGA functions (http://en.wikipedia.org/wiki/INT_10H)
-    ; First load arguments for int 10h into the registers
-    mov bx, 7           ; set color mode. 7 = white
-    mov ah, 0xE         ; teletype output.
-    int 0x10            ; call the interrupt.
-    jmp print           ; Loop until the string is written out
+reset:
+    mov ax, 0           ; ah == 0, reset floppy drive.
+    mov dl, 0           ; drive 0 selected
+    int 0x13            ; Call interrupt 13h (20dec), which controls sector based disk i/o
+    jc reset            ; Try again if it fails. We might want to extend this so it does not retry indefinately
 
-pon:
-    jmp pon             ; 10 GOTO 10 essentially.
+; We're reset, now lets load arguments so that the computer can find and read the data, and puts it in the right place
+read:
+    mov ax, 0x1000      ; This is the segment address we're going to read into (ES:BX = 1000:0000)
+    mov es, ax          ; Now the above is actually true :)
+    xor bx, bx          ; Safety feature, zero bx.
+
+    mov ah, 2           ; ah == 2, read sectors from drive.
+    mov al, 1          ; Sector read count
+    mov ch, 0           ; cylinder offset
+    mov cl, 2           ; sector offset
+    mov dh, 0           ; head offset
+    mov dl, 0           ; drive number
+    int 0x13            ; Make it so.
+    jc read             ; Try again if it stuffed up. again, this usually wouldn't be indefinite and silent
+
+    jmp 1000h:0000      ; Hopefully, the correct sector was read, and we can jump to and execute it.
+
 times 510-($-$$) db 0   ; Nasm macro to pad the rest of the block with 0
 dw 0xAA55               ; x86 boot signature

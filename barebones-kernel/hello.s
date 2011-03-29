@@ -4,14 +4,18 @@
 
 ; For now, it won't return.
 
-[org 0]
 jmp start
 
-msg:
-    db "Hello, World!\0"
+message:
+    db "Hello, World!"
+    db 0
 
 start:
-    mov si, message
+    mov si, message     ; Load the first byte address of message into si
+                        ; this will be auto-incremented by lodsb below
+    mov ax, 1000h       ; Since we've jumped out of the boot block, ds
+    mov ds, ax          ; Will be pointing to the wrong location, we need
+    xor ax, ax          ; to update it first before reading.
 
     ; Now, we loop through printing each character in sequence
 print:
@@ -27,4 +31,4 @@ print:
 
 pon:
     jmp pon             ; Nop when done.
-
+times 512-($-$$) db 0
